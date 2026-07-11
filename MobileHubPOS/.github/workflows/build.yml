@@ -1,48 +1,36 @@
-name: Build MobileHub POS APK
+name: Build APK
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push events targeting default branches
-  push:
-    branches: [ "main", "master", "develop" ]
-  # Triggers the workflow on pull requests targeting default branches
-  pull_request:
-    branches: [ "main", "master" ]
-  # Allows manual runnable triggering from the Actions tab on GitHub
   workflow_dispatch:
+  push:
 
 jobs:
   build:
-    name: Build Debug Android APK
     runs-on: ubuntu-latest
+    # This ensures your build commands run inside the correct folder
+    defaults:
+      run:
+        working-directory: MobileHubPOS
 
     steps:
-      # 1. Checkout the repository code
-      - name: Checkout Code
+      - name: Checkout project
         uses: actions/checkout@v4
 
-      # 2. Set up Java JDK 17 (Required for Android Gradle Plugin 8.0+)
-      # The setup-java action natively supports caching for gradle out of the box
-      - name: Set up JDK 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           java-version: '17'
-          distribution: 'zulu'
-          cache: 'gradle'
+          distribution: 'temurin'
 
-      # 3. Grant executive permission to the Gradle Wrapper file
-      - name: Make Gradlew Executable
-        run: chmod +x gradlew
+      - name: Build APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
-      # 4. Run the Gradle build task to compile the debug APK
-      # Use --stacktrace and --info to supply verbose logging if the build fails
-      - name: Build Debug APK with Gradle
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
-
-      # 5. Locate and Upload the compiled APK as a GitHub actions build artifact
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: MobileHub-POS-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+          # We include 'MobileHubPOS/' here because the artifact uploader 
+          # looks from the root of the repository.
+          path: MobileHubPOS/app/build/outputs/apk/debug/*.apk
